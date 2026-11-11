@@ -1,7 +1,8 @@
 # config.py
-BASE_URL       = "http://localhost:8092/dfn"
-WS_PRICE       = "ws://localhost:8092/dfn/ws/price"
-WS_ORDER       = "ws://localhost:8092/dfn/ws/dfn-tsim"
+BASE_URL       = "https://172.20.71.15/dfn"
+WS_PRICE       = "wss://172.20.71.15/dfn/ws/price"
+WS_ORDER       = "wss://172.20.71.15/dfn/ws/dfn-tsim"
+SSL_CERT_PATH  = r"D:\Git\ESBTest\fastApiProject\server.crt"
 API_KEY        = "broker01-key"
 API_SECRET     = "broker01-secret"
 BROKER         = "BROKER01"

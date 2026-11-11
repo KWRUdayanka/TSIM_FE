@@ -1,11 +1,14 @@
 # ws/order_worker.py
 import json
 import time
+import ssl
 import websocket
+
 from auth import get_tokens
 from config import WS_ORDER, BROKER
 from state import SharedState
 from ws.order_processor import process_order_msg
+from config import WS_ORDER, BROKER, SSL_CERT_PATH
 
 def order_ws_worker(state: SharedState):
     """Runs forever in background, feeds state.history and state.my_open_orders."""
@@ -15,7 +18,14 @@ def order_ws_worker(state: SharedState):
             if not order_token:
                 raise Exception("No order token")
 
-            ws = websocket.create_connection(WS_ORDER, timeout=None)
+            ws = websocket.create_connection(
+                WS_ORDER,
+                timeout=None,
+                sslopt={
+                    "ca_certs": SSL_CERT_PATH,
+                    "cert_reqs": ssl.CERT_REQUIRED
+                }
+            )
             state.ws_order = ws
 
             ws.send(json.dumps({"action": "AUTH", "brokerCode": BROKER, "token": order_token}))

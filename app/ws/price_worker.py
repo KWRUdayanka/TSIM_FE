@@ -3,12 +3,13 @@ import datetime
 import json
 import time
 import re
-
+import ssl
 import websocket
 
 from auth import get_tokens
 from config import WS_PRICE, BROKER
 from state import SharedState
+from config import WS_PRICE, BROKER, SSL_CERT_PATH
 
 INDEX_SYMBOLS = ["TASI"]
 _UESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})")
@@ -23,7 +24,14 @@ def price_ws_worker(state: SharedState):
                 raise Exception("No price token")
 
             state.set_status("Connecting Price WS…")
-            ws = websocket.create_connection(WS_PRICE, timeout=None)
+            ws = websocket.create_connection(
+                WS_PRICE,
+                timeout=None,
+                sslopt={
+                    "ca_certs": SSL_CERT_PATH,
+                    "cert_reqs": ssl.CERT_REQUIRED
+                }
+            )
             state.ws_price = ws
 
             ws.send(json.dumps({
