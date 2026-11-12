@@ -5,7 +5,6 @@ from state import SharedState
 
 
 def render_history(state: SharedState):
-    """Renders the execution history table with colour-coded statuses."""
     st.markdown("### Execution History")
 
     with state.lock:
@@ -16,17 +15,32 @@ def render_history(state: SharedState):
         return
 
     df = pd.DataFrame(history)
+    mode = st.session_state.get("theme_mode", "dark")
+
+    fills_dark = {
+        "rejected": "background-color: #3a1a1a",
+        "filled":   "background-color: #1a3a1a",
+        "expired":  "background-color: #3a2a1a",
+        "pending":  "background-color: #3a3a1a",
+    }
+    fills_light = {
+        "rejected": "background-color: #fbeaea",
+        "filled":   "background-color: #eaf7ee",
+        "expired":  "background-color: #fdf3e3",
+        "pending":  "background-color: #f7f4dc",
+    }
+    fills = fills_dark if mode == "dark" else fills_light
 
     def _row_style(row):
         s = str(row.get("Status", ""))
         if s in ("REJECTED", "CANCELED"):
-            return ["background-color: #3a1a1a"] * len(row)
+            return [fills["rejected"]] * len(row)
         if s in ("FILLED", "REPLACED"):
-            return ["background-color: #1a3a1a"] * len(row)
+            return [fills["filled"]] * len(row)
         if s == "EXPIRED":
-            return ["background-color: #3a2a1a"] * len(row)
+            return [fills["expired"]] * len(row)
         if s.startswith("PENDING_"):
-            return ["background-color: #3a3a1a"] * len(row)
+            return [fills["pending"]] * len(row)
         return [""] * len(row)
 
     styled = df.style.apply(_row_style, axis=1)

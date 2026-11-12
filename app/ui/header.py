@@ -3,6 +3,7 @@ import json
 import streamlit as st
 from datetime import datetime, timedelta
 from state import SharedState
+from ui.theme_toggle import render_theme_toggle
 
 
 def _fmt_time(t: str) -> str:
@@ -25,30 +26,31 @@ def _fmt_date(d: str) -> str:
 
 
 def render_header(state: SharedState):
-    left, right = st.columns([3, 3])
+    # 4 columns: symbol input | LOAD | theme toggle | status + clock
+    left, mid, toggle_col, right = st.columns([3, 1, 1, 3])
 
     with left:
-        h1, h2 = st.columns([3, 1])
-        with h1:
-            new_sym = st.text_input(
-                "Symbol", value=state.current_symbol, key="sym_input",
-                label_visibility="collapsed", placeholder="Symbol",
-            )
-        with h2:
-            if st.button("LOAD", use_container_width=True, type="primary"):
-                sym = new_sym.strip()
-                if sym:
-                    state.current_symbol = sym
-                    if sym not in state.subscribed_symbols and state.ws_price:
-                        try:
-                            state.ws_price.send(json.dumps({
-                                "action": "SUBSCRIBE",
-                                "symbols": [sym],
-                                "exchange": state.market_exchange or "TDWL",
-                            }))
-                            state.subscribed_symbols.add(sym)
-                        except Exception:
-                            pass
+        new_sym = st.text_input(
+            "Symbol", value=state.current_symbol, key="sym_input",
+            label_visibility="collapsed", placeholder="Symbol",
+        )
+    with mid:
+        if st.button("LOAD", use_container_width=True, type="primary"):
+            sym = new_sym.strip()
+            if sym:
+                state.current_symbol = sym
+                if sym not in state.subscribed_symbols and state.ws_price:
+                    try:
+                        state.ws_price.send(json.dumps({
+                            "action": "SUBSCRIBE",
+                            "symbols": [sym],
+                            "exchange": state.market_exchange or "TDWL",
+                        }))
+                        state.subscribed_symbols.add(sym)
+                    except Exception:
+                        pass
+    with toggle_col:
+        render_theme_toggle()
 
     with right:
         ws_status = state.get_status()
@@ -77,12 +79,10 @@ def render_header(state: SharedState):
         else:
             mkt_class = "closed"
 
-            # ── Exchange date/time from the feed ─────────────────
         if mkt_date and mkt_time:
             date_display = _fmt_date(mkt_date)
             time_display = _fmt_time(mkt_time)
         else:
-            # Fallback to local clock until first feed message arrives
             now = datetime.now()
             date_display = now.strftime("%Y-%m-%d")
             time_display = now.strftime("%H:%M:%S")
@@ -99,19 +99,19 @@ def render_header(state: SharedState):
                 </div>
                 <div style="
                     padding:5px 12px;
-                    background:rgba(108,182,255,0.08);
-                    border:1px solid rgba(108,182,255,0.2);
+                    background:var(--accent-dim);
+                    border:1px solid var(--border-strong);
                     border-radius:6px;
                     font-family:'JetBrains Mono',monospace;
                     font-size:11px;
                     font-weight:500;
-                    color:#a0aec0;
+                    color:var(--text-mid);
                     letter-spacing:0.04em;">
-                    <span style="color:#6cb6ff;font-weight:600;">{mkt_exch}</span>
+                    <span style="color:var(--accent);font-weight:600;">{mkt_exch}</span>
                     &nbsp;·&nbsp;
                     <span>{date_display}</span>
                     &nbsp;
-                    <span style="color:#e6ecf2;font-weight:600;
+                    <span style="color:var(--text-hi);font-weight:600;
                                  font-variant-numeric:tabular-nums;">
                         {time_display}
                     </span>

@@ -11,7 +11,8 @@ def render_order_book(state: SharedState, sym: str):
         unsafe_allow_html=True,
     )
 
-    book, _ = state.snapshot(sym)      # my_orders no longer needed
+    # Merged view: market book + client shadow, with `mine` per level.
+    book = state.merged_book(sym)
     bids = book["bids"][:DEPTH]
     asks = book["asks"][:DEPTH]
 
@@ -38,16 +39,15 @@ def render_order_book(state: SharedState, sym: str):
         a = asks[i] if i < len(asks) else {}
 
         b_px, a_px = b.get("price"), a.get("price")
-        b_key = f"{float(b_px):.2f}" if b_px is not None else None
-        a_key = f"{float(a_px):.2f}" if a_px is not None else None
         b_qty = int(b["qty"]) if b.get("qty") is not None else 0
         a_qty = int(a["qty"]) if a.get("qty") is not None else 0
         b_pct = (b_qty / max_q) * 100 if max_q else 0
         a_pct = (a_qty / max_q) * 100 if max_q else 0
 
-        # --- side-aware ownership check ---
-        b_owned = state.has_order_at(sym, b_key, "1")   # BUY
-        a_owned = state.has_order_at(sym, a_key, "2")   # SELL
+        # `mine` comes from merged_book() — the qty on this level contributed by
+        # this broker's shadow orders on that side.
+        b_owned = bool(b.get("mine", 0) > 0)
+        a_owned = bool(a.get("mine", 0) > 0)
         b_cls = "my-order" if b_owned else "bid"
         a_cls = "my-order" if a_owned else "ask"
 
@@ -57,9 +57,7 @@ def render_order_book(state: SharedState, sym: str):
             f'<div style="position:relative;padding:2px 0;">'
             f'<div style="position:absolute;left:0;top:0;bottom:0;width:{b_pct}%;'
             f'background:linear-gradient(90deg,'
-            f'rgba(74,222,128,0.55) 0%,'
-            f'rgba(74,222,128,0.25) 60%,'
-            f'rgba(74,222,128,0.10) 100%);'
+            f'var(--bid-bar-a) 0%, var(--bid-bar-b) 60%, var(--bid-bar-c) 100%);'
             f'border-radius:2px;"></div>'
             f'<div class="{b_cls}" style="position:relative;z-index:1;'
             f'padding-left:4px;">'
@@ -79,9 +77,7 @@ def render_order_book(state: SharedState, sym: str):
             f'<div style="position:relative;padding:2px 0;">'
             f'<div style="position:absolute;right:0;top:0;bottom:0;width:{a_pct}%;'
             f'background:linear-gradient(270deg,'
-            f'rgba(248,113,113,0.55) 0%,'
-            f'rgba(248,113,113,0.25) 60%,'
-            f'rgba(248,113,113,0.10) 100%);'
+            f'var(--ask-bar-a) 0%, var(--ask-bar-b) 60%, var(--ask-bar-c) 100%);'
             f'border-radius:2px;"></div>'
             f'<div class="{a_cls}" style="position:relative;z-index:1;'
             f'text-align:right;padding-right:4px;">'

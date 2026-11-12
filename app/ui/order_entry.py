@@ -25,17 +25,14 @@ def render_order_entry(state: SharedState, default_sym: str):
         ord_qty = st.number_input("Qty", min_value=1.0, value=100.0, step=1.0,
                                   key="ord_qty", label_visibility="collapsed")
 
-    # ── Order type is rendered BEFORE price so we know whether to show price ──
     with o5:
         ord_type = st.selectbox("Type", ["LIMIT", "MARKET"],
                                 key="ord_type", label_visibility="collapsed")
 
     is_market = ord_type == "MARKET"
 
-    # ── Price field: shown and editable for LIMIT, hidden for MARKET ──
     with o4:
         if is_market:
-            # Disabled placeholder keeps the column width and shows "—"
             st.text_input("Price", value="—", disabled=True,
                           key="ord_px_disabled", label_visibility="collapsed")
             ord_px = 0.0

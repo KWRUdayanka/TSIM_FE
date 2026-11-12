@@ -35,8 +35,8 @@ def render_market_overview(state: SharedState):
 
     st.markdown(f"""
     <div style="
-        background: linear-gradient(135deg, #0d1219 0%, #131a24 100%);
-        border: 1px solid rgba(120,160,210,0.12);
+        background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 100%);
+        border: 1px solid var(--border-subtle);
         border-radius: 10px;
         padding: 8px 20px;
         margin-bottom: 8px;
@@ -48,37 +48,37 @@ def render_market_overview(state: SharedState):
     ">
         <div style="display:flex; gap:100px; align-items:center;">
             <span style="display:inline-flex; gap:20px; align-items:baseline;">
-                <span style="color:#5c6b7f;">Up</span>
-                <span style="color:#4ade80;font-weight:600;">{fmt_int(adv)}</span>
+                <span style="color:var(--text-lo);">Up</span>
+                <span style="color:var(--green);font-weight:600;">{fmt_int(adv)}</span>
             </span>
             <span style="display:inline-flex; gap:20px; align-items:baseline;">
-                <span style="color:#5c6b7f;">Down</span>
-                <span style="color:#f87171;font-weight:600;">{fmt_int(dec)}</span>
+                <span style="color:var(--text-lo);">Down</span>
+                <span style="color:var(--red);font-weight:600;">{fmt_int(dec)}</span>
             </span>
             <span style="display:inline-flex; gap:20px; align-items:baseline;">
-                <span style="color:#5c6b7f;">Unchanged</span>
-                <span style="color:#a0aec0;font-weight:600;">{fmt_int(unchg)}</span>
+                <span style="color:var(--text-lo);">Unchanged</span>
+                <span style="color:var(--text-mid);font-weight:600;">{fmt_int(unchg)}</span>
             </span>
             <span style="display:inline-flex; gap:20px; align-items:baseline;">
-                <span style="color:#5c6b7f;">Symbol Traded</span>
-                <span style="color:#e6ecf2;font-weight:600;">{fmt_int(symbols)}</span>
+                <span style="color:var(--text-lo);">Symbol Traded</span>
+                <span style="color:var(--text-hi);font-weight:600;">{fmt_int(symbols)}</span>
             </span>
-            <span style="width:1px;height:16px;background:rgba(120,160,210,0.15);"></span>
+            <span style="width:1px;height:16px;background:var(--border-strong);"></span>
             <span style="display:inline-flex; gap:20px; align-items:baseline;">
-                <span style="color:#5c6b7f;">Volume</span>
-                <span style="color:#6cb6ff;font-weight:600;">{fmt_amt(vol)}</span>
-            </span>
-            <span style="display:inline-flex; gap:20px; align-items:baseline;">
-                <span style="color:#5c6b7f;">Turnover</span>
-                <span style="color:#6cb6ff;font-weight:600;">{fmt_amt(tovr)}</span>
+                <span style="color:var(--text-lo);">Volume</span>
+                <span style="color:var(--accent);font-weight:600;">{fmt_amt(vol)}</span>
             </span>
             <span style="display:inline-flex; gap:20px; align-items:baseline;">
-                <span style="color:#5c6b7f;">Trades</span>
-                <span style="color:#a0aec0;font-weight:600;">{fmt_int(trades)}</span>
+                <span style="color:var(--text-lo);">Turnover</span>
+                <span style="color:var(--accent);font-weight:600;">{fmt_amt(tovr)}</span>
             </span>
             <span style="display:inline-flex; gap:20px; align-items:baseline;">
-                <span style="color:#5c6b7f;">Market Cap</span>
-                <span style="color:#a78bfa;font-weight:600;">{fmt_amt(cap)}</span>
+                <span style="color:var(--text-lo);">Trades</span>
+                <span style="color:var(--text-mid);font-weight:600;">{fmt_int(trades)}</span>
+            </span>
+            <span style="display:inline-flex; gap:20px; align-items:baseline;">
+                <span style="color:var(--text-lo);">Market Cap</span>
+                <span style="color:var(--violet);font-weight:600;">{fmt_amt(cap)}</span>
             </span>
         </div>
     </div>

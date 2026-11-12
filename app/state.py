@@ -1,5 +1,6 @@
 # state.py
 import threading
+import time
 from collections import deque
 
 from config import DEFAULT_SYMBOL, OHLC_RING_SIZE
@@ -49,11 +50,10 @@ class SharedState:
         self.top_stocks_cache = {}
         self.top_stocks_tt = "0"
 
-        # ---- OHLC ----
         self.ohlc_cache = {}
         self.ohlc_current_tf = "1m"
 
-    # ---------------- existing helpers ----------------
+    # ---------------- market status / status ----------------
     def set_market_status(self, exchange, status, date=None, time=None, aggregates=None):
         with self.lock:
             self.market_exchange = exchange
@@ -71,6 +71,7 @@ class SharedState:
     def get_status(self):
         with self.lock: return self.status
 
+    # ---------------- market book ----------------
     def update_book(self, sym, bids, asks, ts):
         with self.lock:
             self.book_cache[sym] = {"bids": bids, "asks": asks, "timestamp": ts}
@@ -81,40 +82,138 @@ class SharedState:
             orders = dict(self.my_open_orders.get(sym, {}))
         return book, orders
 
+    # ---------------- history ----------------
     def add_history(self, entry):
         with self.lock:
             self.history.insert(0, entry)
             self.history = self.history[:300]
 
+    # ---------------- shadow orders ----------------
     def add_my_order(self, sym, price, side, qty, req_id):
         price_key = f"{float(price):.2f}"
         with self.lock:
             self.my_open_orders.setdefault(sym, {}).setdefault(price_key, []).append({
-                "side": side, "qty": qty, "reqId": req_id, "ordId": None,
+                "side": str(side),
+                "qty": float(qty),
+                "reqId": str(req_id or ""),
+                "ordId": None,
             })
 
-    def remove_order(self, sym, target):
-        if not target: return
-        with self.lock:
-            if sym not in self.my_open_orders: return
-            for px_key, orders in list(self.my_open_orders[sym].items()):
-                kept = []
-                for o in orders:
-                    oid = str(o.get("ordId") or "").strip()
-                    rid = str(o.get("reqId") or "").strip()
-                    if target != oid and target != rid:
-                        kept.append(o)
-                if kept: self.my_open_orders[sym][px_key] = kept
-                else: del self.my_open_orders[sym][px_key]
+    def _all_rows(self, sym):
+        for px_key, orders in self.my_open_orders.get(sym, {}).items():
+            for o in orders:
+                yield px_key, o
 
-    def has_order_at(self, symbol, price_key, side):
-        if not price_key: return False
+    def ensure_my_order(self, sym, price, side, qty, req_id, ord_id):
+        if not ord_id:
+            return
         with self.lock:
-            for o in self.my_open_orders.get(symbol, {}).get(price_key, []):
+            for _, o in self._all_rows(sym):
+                if str(o.get("ordId") or "") == str(ord_id):
+                    return
+            for _, o in self._all_rows(sym):
+                if str(o.get("reqId") or "") == str(req_id) and not o.get("ordId"):
+                    o["ordId"] = str(ord_id)
+                    o["qty"] = float(qty)
+                    return
+            price_key = f"{float(price):.2f}"
+            self.my_open_orders.setdefault(sym, {}).setdefault(price_key, []).append({
+                "side": str(side),
+                "qty": float(qty),
+                "reqId": str(req_id or ""),
+                "ordId": str(ord_id),
+            })
+
+    def attach_ord_id(self, sym, req_id, ord_id):
+        if not req_id or not ord_id:
+            return
+        with self.lock:
+            for _, o in self._all_rows(sym):
+                if str(o.get("reqId") or "") == str(req_id) and not o.get("ordId"):
+                    o["ordId"] = str(ord_id)
+                    return
+
+    def reduce_qty(self, sym, ord_id, leaves_qty):
+        if not ord_id or leaves_qty is None:
+            return
+        with self.lock:
+            for px_key, o in list(self._all_rows(sym)):
+                if str(o.get("ordId") or "") == str(ord_id):
+                    o["qty"] = float(leaves_qty)
+                    if o["qty"] <= 0:
+                        self._drop_row(sym, px_key, o)
+                    return
+
+    def remove_order(self, sym, *targets):
+        wanted = {str(t) for t in targets if t}
+        if not wanted:
+            return
+        with self.lock:
+            levels = self.my_open_orders.get(sym)
+            if not levels:
+                return
+            for px_key in list(levels.keys()):
+                kept = []
+                for o in levels[px_key]:
+                    row_ids = {
+                        str(o.get("ordId") or ""),
+                        str(o.get("reqId") or ""),
+                        str(o.get("origOrdId") or ""),
+                    } - {""}
+                    if row_ids & wanted:
+                        continue
+                    kept.append(o)
+                if kept:
+                    levels[px_key] = kept
+                else:
+                    del levels[px_key]
+
+    def _drop_row(self, sym, px_key, order_ref):
+        levels = self.my_open_orders.get(sym, {})
+        rows = [o for o in levels.get(px_key, []) if o is not order_ref]
+        if rows:
+            levels[px_key] = rows
+        elif px_key in levels:
+            del levels[px_key]
+
+    def has_order_at(self, sym, price_key, side):
+        if not price_key:
+            return False
+        with self.lock:
+            for o in self.my_open_orders.get(sym, {}).get(price_key, []):
                 if str(o.get("side")) == str(side):
                     return True
-            return False
+        return False
 
+    # ---------------- merged book ----------------
+    def merged_book(self, sym):
+        with self.lock:
+            book = self.book_cache.get(sym, {"bids": [], "asks": [], "timestamp": ""})
+            shadow = {px: list(rows) for px, rows in self.my_open_orders.get(sym, {}).items()}
+
+        def _overlay(levels, side_code):
+            merged = {}
+            for lvl in levels:
+                px = float(lvl["price"])
+                merged[f"{px:.2f}"] = {"price": px, "qty": float(lvl["qty"]), "mine": 0.0}
+            for px_key, rows in shadow.items():
+                for o in rows:
+                    if str(o["side"]) != side_code:
+                        continue
+                    if px_key not in merged:
+                        merged[px_key] = {"price": float(px_key), "qty": 0.0, "mine": 0.0}
+                    merged[px_key]["qty"] += float(o["qty"])
+                    merged[px_key]["mine"] += float(o["qty"])
+            rev = side_code == "1"
+            return sorted(merged.values(), key=lambda x: x["price"], reverse=rev)
+
+        return {
+            "bids": _overlay(book["bids"], "1"),
+            "asks": _overlay(book["asks"], "2"),
+            "timestamp": book.get("timestamp", ""),
+        }
+
+    # ---------------- equity / index ----------------
     def update_equity(self, symbol, fields):
         with self.lock: self.equity_cache[symbol] = fields
 
@@ -127,6 +226,7 @@ class SharedState:
     def get_index(self, symbol):
         with self.lock: return dict(self.index_cache.get(symbol, {}))
 
+    # ---------------- trades ----------------
     def update_trade(self, symbol, trade):
         with self.lock:
             trades = self.trade_cache.setdefault(symbol, [])
@@ -213,11 +313,12 @@ class SharedState:
             with self.lock:
                 self.ohlc_current_tf = tf
 
+    # ---------------- top stocks ----------------
     def update_top_stocks(self, exchange, tt, mkt, entries):
         key = f"{exchange}:{tt}:{mkt}"
         with self.lock:
             self.top_stocks_cache[key] = {
-                "ts": __import__("time").time() * 1000,
+                "ts": time.time() * 1000,
                 "exchange": exchange, "tt": tt, "mkt": mkt,
                 "entries": list(entries),
             }
