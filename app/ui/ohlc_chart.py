@@ -122,22 +122,36 @@ def _render_candles(candles, sym):
         showlegend=False,
     ), row=2, col=1)
 
+    # ---- THEME-AWARE COLORS ----
+    mode = st.session_state.get("theme_mode", "dark")
+    if mode == "dark":
+        bg_color       = "#131722"
+        grid_color     = "#2a2e39"
+        text_color     = "#d1d4dc"
+        line_color     = "#2a2e39"
+    else:
+        bg_color       = "#ffffff"
+        grid_color     = "rgba(0,0,0,0.08)"
+        text_color     = "#0f1720"
+        line_color     = "rgba(0,0,0,0.15)"
+
     fig.update_layout(
         height=560,
         margin=dict(l=10, r=10, t=20, b=10),
-        plot_bgcolor="#131722",
-        paper_bgcolor="#131722",
-        font=dict(color="#d1d4dc"),
+        plot_bgcolor=bg_color,
+        paper_bgcolor=bg_color,
+        font=dict(color=text_color),
         dragmode="pan",
         hovermode="x unified",
         bargap=0.15,
     )
     fig.update_xaxes(
-        gridcolor="#2a2e39",
+        gridcolor=grid_color,
+        linecolor=line_color,
         rangeslider=dict(visible=False),
         showspikes=False,
     )
-    fig.update_yaxes(gridcolor="#2a2e39", side="right", row=1, col=1)
+    fig.update_yaxes(gridcolor=grid_color, linecolor=line_color, side="right", row=1, col=1)
     fig.update_yaxes(showgrid=False, showticklabels=False, side="right", row=2, col=1)
 
     # candle y-range — include open/close so nothing is clipped
@@ -155,7 +169,7 @@ def _render_candles(candles, sym):
         fig,
         use_container_width=True,
         config={"displaylogo": False, "scrollZoom": False},
-        key=f"ohlc_chart_{sym}",
+        key=f"ohlc_chart_{sym}_{mode}",   # <- include mode in key so Plotly remounts on toggle
     )
 
 

@@ -1,7 +1,6 @@
 # ui/styles.py
 import streamlit as st
 
-
 DARK_VARS = {
     "--bg-0": "#070a0f",
     "--bg-1": "#0d1219",
@@ -9,6 +8,7 @@ DARK_VARS = {
     "--bg-3": "#1a2230",
     "--border-subtle": "rgba(120,160,210,0.08)",
     "--border-strong": "rgba(120,160,210,0.18)",
+    "--border-input": "rgba(120,160,210,0.28)",
     "--text-hi": "#e6ecf2",
     "--text-mid": "#a0aec0",
     "--text-lo": "#5c6b7f",
@@ -33,29 +33,30 @@ DARK_VARS = {
 LIGHT_VARS = {
     "--bg-0": "#f7f9fc",
     "--bg-1": "#ffffff",
-    "--bg-2": "#eef2f7",
-    "--bg-3": "#e3e9f1",
-    "--border-subtle": "rgba(40,70,120,0.10)",
-    "--border-strong": "rgba(40,70,120,0.22)",
+    "--bg-2": "#ffffff",
+    "--bg-3": "#f1f5fb",
+    "--border-subtle": "rgba(40,70,120,0.12)",
+    "--border-strong": "rgba(40,70,120,0.24)",
+    "--border-input": "rgba(40,70,120,0.35)",
     "--text-hi": "#0f1720",
-    "--text-mid": "#3b4a5c",
-    "--text-lo": "#6b7a8d",
+    "--text-mid": "#2c3a4a",
+    "--text-lo": "#5a6878",
     "--accent": "#1f6feb",
     "--accent-dim": "rgba(31,111,235,0.12)",
-    "--green": "#138a3d",
-    "--green-dim": "rgba(19,138,61,0.12)",
+    "--green": "#0f8a3d",
+    "--green-dim": "rgba(15,138,61,0.12)",
     "--red": "#c0392b",
     "--red-dim": "rgba(192,57,43,0.12)",
-    "--amber": "#b7791f",
-    "--amber-dim": "rgba(183,121,31,0.15)",
+    "--amber": "#9a6a00",
+    "--amber-dim": "rgba(154,106,0,0.14)",
     "--violet": "#6b46c1",
-    "--bid-bar-a": "rgba(19,138,61,0.45)",
-    "--bid-bar-b": "rgba(19,138,61,0.20)",
-    "--bid-bar-c": "rgba(19,138,61,0.08)",
-    "--ask-bar-a": "rgba(192,57,43,0.45)",
-    "--ask-bar-b": "rgba(192,57,43,0.20)",
-    "--ask-bar-c": "rgba(192,57,43,0.08)",
-    "--my-glow": "rgba(183,121,31,0.35)",
+    "--bid-bar-a": "rgba(15,138,61,0.40)",
+    "--bid-bar-b": "rgba(15,138,61,0.18)",
+    "--bid-bar-c": "rgba(15,138,61,0.06)",
+    "--ask-bar-a": "rgba(192,57,43,0.40)",
+    "--ask-bar-b": "rgba(192,57,43,0.18)",
+    "--ask-bar-c": "rgba(192,57,43,0.06)",
+    "--my-glow": "rgba(154,106,0,0.30)",
 }
 
 
@@ -101,15 +102,13 @@ def inject_styles():
     [data-testid="stHorizontalBlock"] {{ gap: 0.75rem !important; }}
 
     [data-testid="stVerticalBlockBorderWrapper"] {{
-        background:
-            linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 100%),
-            var(--bg-1) !important;
+        background: var(--bg-1) !important;
         border: 1px solid var(--border-subtle) !important;
         border-radius: 10px !important;
         padding: 12px 14px !important;
         box-shadow:
-            0 1px 2px rgba(0,0,0,0.10),
-            0 4px 12px rgba(0,0,0,0.06) !important;
+            0 1px 2px rgba(0,0,0,0.08),
+            0 4px 12px rgba(0,0,0,0.05) !important;
         transition: border-color 0.2s ease;
     }}
     [data-testid="stVerticalBlockBorderWrapper"]:hover {{
@@ -170,57 +169,163 @@ def inject_styles():
         margin-top: 2px !important;
     }}
 
-    /* Widget labels and values */
-    label, .stSelectbox label, .stNumberInput label,
-    .stTextInput label, .stDateInput label {{
+    /* ---------- widget labels ---------- */
+    label,
+    .stTextInput > label,
+    .stNumberInput > label,
+    .stSelectbox > label,
+    .stDateInput > label {{
         color: var(--text-lo) !important;
-    }}
-    [data-baseweb="select"] > div,
-    [data-baseweb="input"] > div,
-    [data-baseweb="base-input"] {{
-        background: var(--bg-2) !important;
-        color: var(--text-hi) !important;
-        border-color: var(--border-subtle) !important;
-    }}
-    [data-baseweb="popover"] ul {{
-        background: var(--bg-2) !important;
-        color: var(--text-hi) !important;
-    }}
-    [data-baseweb="popover"] li:hover {{
-        background: var(--bg-3) !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.04em !important;
     }}
 
+    /* ---------- text inputs / number inputs / date inputs ---------- */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input,
-    .stDateInput > div > div > input {{
+    .stDateInput > div > div > input,
+    [data-baseweb="input"] input {{
         background: var(--bg-2) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: 6px !important;
         color: var(--text-hi) !important;
+        -webkit-text-fill-color: var(--text-hi) !important;
+        caret-color: var(--text-hi) !important;
         font-family: 'JetBrains Mono', monospace !important;
         font-size: 12px !important;
         padding: 7px 10px !important;
-        transition: all 0.15s ease;
+        border: none !important;
+        box-shadow: none !important;
     }}
+
+    [data-baseweb="input"] > div {{
+        background: var(--bg-2) !important;
+        border: 1px solid var(--border-input) !important;
+        border-radius: 6px !important;
+    }}
+
     .stTextInput > div > div > input:focus,
     .stNumberInput > div > div > input:focus,
-    .stDateInput > div > div > input:focus {{
-        border-color: var(--accent) !important;
-        background: var(--bg-3) !important;
+    .stDateInput > div > div > input:focus,
+    [data-baseweb="input"] input:focus {{
+        background: var(--bg-2) !important;
+        color: var(--text-hi) !important;
         box-shadow: 0 0 0 3px var(--accent-dim) !important;
         outline: none !important;
     }}
-    .stSelectbox > div > div {{
+
+    .stTextInput input::placeholder,
+    .stNumberInput input::placeholder {{
+        color: var(--text-lo) !important;
+        -webkit-text-fill-color: var(--text-lo) !important;
+        opacity: 0.85 !important;
+    }}
+
+    .stTextInput input:disabled,
+    .stNumberInput input:disabled {{
+        background: var(--bg-3) !important;
+        color: var(--text-mid) !important;
+        -webkit-text-fill-color: var(--text-mid) !important;
+    }}
+
+    /* ---------- number input stepper buttons (+ / -) ---------- */
+    .stNumberInput [data-testid="stNumberInputStepDown"],
+    .stNumberInput [data-testid="stNumberInputStepUp"] {{
+        background-color: var(--bg-3) !important;
+        border: none !important;
+        border-left: 1px solid var(--border-input) !important;
+        color: var(--text-hi) !important;
+        border-radius: 0 !important;
+    }}
+
+    .stNumberInput [data-testid="stNumberInputStepDown"]:last-child,
+    .stNumberInput [data-testid="stNumberInputStepUp"]:last-child {{
+        border-top-right-radius: 6px !important;
+        border-bottom-right-radius: 6px !important;
+    }}
+
+    .stNumberInput [data-testid="stNumberInputStepDown"]:hover,
+    .stNumberInput [data-testid="stNumberInputStepUp"]:hover {{
+        background-color: var(--border-input) !important;
+        color: var(--accent) !important;
+    }}
+
+    .stNumberInput [data-testid="stNumberInputStepDown"] svg,
+    .stNumberInput [data-testid="stNumberInputStepUp"] svg {{
+        fill: var(--text-hi) !important;
+        color: var(--text-hi) !important;
+    }}
+
+    /* ---------- selectbox ---------- */
+    .stSelectbox > div > div,
+    [data-baseweb="select"] > div {{
         background: var(--bg-2) !important;
-        border: 1px solid var(--border-subtle) !important;
+        border: 1px solid var(--border-input) !important;
         border-radius: 6px !important;
         font-size: 12px !important;
         color: var(--text-hi) !important;
     }}
 
+    div[data-baseweb="select"] > div > div,
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] input {{
+        color: var(--text-hi) !important;
+        -webkit-text-fill-color: var(--text-hi) !important;
+    }}
+
+    div[data-baseweb="select"] svg {{
+        fill: var(--text-mid) !important;
+        color: var(--text-mid) !important;
+    }}
+
+    [data-baseweb="popover"] > div,
+    [data-baseweb="menu"] {{
+        background: var(--bg-1) !important;
+        border: 1px solid var(--border-input) !important;
+        border-radius: 6px !important;
+        color: var(--text-hi) !important;
+    }}
+    [data-baseweb="menu"] li,
+    [data-baseweb="menu"] ul li {{
+        color: var(--text-hi) !important;
+        background: var(--bg-1) !important;
+    }}
+    [data-baseweb="menu"] li:hover,
+    [data-baseweb="menu"] ul li:hover,
+    [data-baseweb="menu"] [aria-selected="true"] {{
+        background: var(--bg-3) !important;
+        color: var(--accent) !important;
+    }}
+
+    [data-baseweb="base-input"] {{
+        background: var(--bg-2) !important;
+        border-color: var(--border-input) !important;
+        color: var(--text-hi) !important;
+    }}
+
+    /* ---------- radio buttons ---------- */
+    [data-baseweb="radio"] div {{
+        color: var(--text-hi) !important;
+    }}
+    [data-baseweb="radio"] [data-testid="stMarkdownContainer"] p {{
+        color: var(--text-hi) !important;
+        -webkit-text-fill-color: var(--text-hi) !important;
+        font-family: 'Inter', sans-serif !important;
+    }}
+    [data-baseweb="radio"] div[role="radio"] > div:first-child {{
+        border-color: var(--text-mid) !important;
+    }}
+    [data-baseweb="radio"] div[aria-checked="true"] > div:first-child > div {{
+        background-color: var(--accent) !important;
+    }}
+    [data-baseweb="radio"] div[aria-checked="true"] > div:first-child {{
+        border-color: var(--accent) !important;
+    }}
+
+    /* ---------- buttons ---------- */
     .stButton > button {{
         background: var(--bg-2) !important;
-        border: 1px solid var(--border-strong) !important;
+        border: 1px solid var(--border-input) !important;
         border-radius: 6px !important;
         color: var(--text-hi) !important;
         font-family: 'Inter', sans-serif !important;
@@ -240,23 +345,50 @@ def inject_styles():
     .stButton > button[kind="primary"] {{
         background: linear-gradient(135deg, var(--green) 0%, var(--green) 100%) !important;
         border: none !important;
-        color: #0a1a10 !important;
+        color: #ffffff !important;
         box-shadow: 0 2px 8px var(--green-dim) !important;
     }}
     .stButton > button[kind="primary"]:hover {{
         box-shadow: 0 4px 12px var(--green-dim) !important;
+        color: #ffffff !important;
     }}
 
+    /* ---------- dataframe fallback styling ---------- */
     [data-testid="stDataFrame"] {{
         border-radius: 8px !important;
         overflow: hidden !important;
         border: 1px solid var(--border-subtle) !important;
+        background-color: var(--bg-1) !important;
+    }}
+    [data-testid="stDataFrame"] > div,
+    [data-testid="stDataFrame"] iframe {{
+        background-color: var(--bg-1) !important;
+        color: var(--text-hi) !important;
+    }}
+    [data-testid="stDataFrame"] canvas {{
+        opacity: 0.99 !important; 
+    }}
+    [data-testid="stDataFrame"] [role="grid"] {{
+        background-color: var(--bg-1) !important;
+        color: var(--text-hi) !important;
+        border-color: var(--border-subtle) !important;
+    }}
+    [data-testid="stDataFrame"] [role="row"] {{
+        background-color: var(--bg-1) !important;
+    }}
+    [data-testid="stDataFrame"] [role="columnheader"] {{
+        background-color: var(--bg-2) !important;
+        color: var(--text-lo) !important;
+    }}
+    [data-testid="stDataFrame"] [role="gridcell"] {{
+        color: var(--text-hi) !important;
     }}
     [data-testid="stDataFrame"] table {{
         font-family: 'JetBrains Mono', monospace !important;
         font-size: 11px !important;
     }}
 
+    /* ---------- order book ---------- */
     .book-header {{
         color: var(--text-hi);
         font-size: 18px;
@@ -311,6 +443,7 @@ def inject_styles():
         text-shadow: 0 0 10px var(--my-glow);
     }}
 
+    /* ---------- status pills ---------- */
     .status-pill {{
         display: inline-flex;
         align-items: center;
@@ -323,7 +456,8 @@ def inject_styles():
         letter-spacing: 0.05em;
         text-transform: uppercase;
     }}
-    .status-pill.live {{
+    .status-pill.live,
+    .status-pill.open {{
         background: var(--green-dim);
         color: var(--green);
         border: 1px solid var(--green-dim);
@@ -336,11 +470,6 @@ def inject_styles():
         background: var(--green);
         box-shadow: 0 0 8px var(--green);
         animation: pulse 1.8s ease-in-out infinite;
-    }}
-    .status-pill.open {{
-        background: var(--green-dim);
-        color: var(--green);
-        border: 1px solid var(--green-dim);
     }}
     .status-pill.closed {{
         background: var(--red-dim);
@@ -357,6 +486,7 @@ def inject_styles():
         50% {{ opacity: 0.5; box-shadow: 0 0 4px var(--green); }}
     }}
 
+    /* ---------- scrollbar ---------- */
     ::-webkit-scrollbar {{ width: 8px; height: 8px; }}
     ::-webkit-scrollbar-track {{ background: transparent; }}
     ::-webkit-scrollbar-thumb {{
@@ -365,6 +495,7 @@ def inject_styles():
     }}
     ::-webkit-scrollbar-thumb:hover {{ background: var(--accent); }}
 
+    /* ---------- misc ---------- */
     hr {{
         border: none !important;
         border-top: 1px solid var(--border-subtle) !important;

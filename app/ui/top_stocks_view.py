@@ -26,6 +26,7 @@ def render_top_stocks(state):
     current = getattr(state, "top_stocks_tt", "0")
     labels = list(TT_LABELS.keys())
     idx = labels.index(current) if current in labels else 0
+
     picked = st.radio(
         "Ranking", labels, index=idx,
         format_func=lambda k: TT_LABELS[k],
@@ -52,26 +53,46 @@ def render_top_stocks(state):
         "Turnover": e.get("tovr"),
     } for e in entries])
 
+    # Define colors based on the active theme
+    mode = st.session_state.get("theme_mode", "dark")
+    if mode == "dark":
+        green_color = "#4ade80"
+        red_color = "#f87171"
+        text_color = "#e6ecf2"
+        bg_color = "#0d1219"
+    else:
+        green_color = "#0f8a3d"  # Darker green for light mode
+        red_color = "#c0392b"  # Darker red for light mode
+        text_color = "#0f1720"
+        bg_color = "#ffffff"
+
     def _color_change(v):
         try:
-            return "color: #26a69a" if float(v) >= 0 else "color: #ef5350"
+            return f"color: {green_color}" if float(v) >= 0 else f"color: {red_color}"
         except Exception:
             return ""
 
+    # Apply base background and text colors to the whole dataframe via Styler
     styled = (
         df.style
-          .format({
-              "LTP":      "{:.3f}",
-              "Change":   "{:+.3f}",
-              "Change %": "{:+.2f}%",
-              "Volume":   "{:,}",
-              "Trades":   "{:,}",
-              "Turnover": "{:,.2f}",
-          })
-          .map(_color_change, subset=["Change", "Change %"])
+        .set_properties(**{'background-color': bg_color, 'color': text_color})
+        .format({
+            "LTP": "{:.3f}",
+            "Change": "{:+.3f}",
+            "Change %": "{:+.2f}%",
+            "Volume": "{:,}",
+            "Trades": "{:,}",
+            "Turnover": "{:,.2f}",
+        })
+        .map(_color_change, subset=["Change", "Change %"])
     )
 
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    # NO `theme` argument here. Let the Styler handle the colors.
+    st.dataframe(
+        styled,
+        use_container_width=True,
+        hide_index=True,
+    )
 
     ts = snapshot.get("ts")
     if ts:

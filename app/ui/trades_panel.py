@@ -13,12 +13,10 @@ def render_trades_panel(state: SharedState, sym: str, limit: int = 30):
         st.info(f"No trades for {sym} yet.")
         return
 
-    # Build display rows
     rows = []
     for t in trades:
         side = t.get("tradeType", "")
         side_label = "BUY" if side == "B" else ("SELL" if side == "S" else "—")
-        side_colour = "#4ade80" if side == "B" else ("#f87171" if side == "S" else "#a0aec0")
 
         tts = t.get("tradeTime", "")   # "082522" from feed
         time_str = f"{tts[0:2]}:{tts[2:4]}:{tts[4:6]}" if len(tts) == 6 else tts
@@ -31,18 +29,30 @@ def render_trades_panel(state: SharedState, sym: str, limit: int = 30):
             "Seq": t.get("seq", ""),
         })
 
-    # Colour-coded table via HTML for side coloring
     html_rows = "".join(
         f'<tr>'
-        f'<td style="padding:2px 8px;color:#a0aec0;font-family:JetBrains Mono,monospace;font-size:11px;">{r["Time"]}</td>'
+        f'<td style="padding:2px 8px;color:var(--text-mid);'
+        f'font-family:JetBrains Mono,monospace;font-size:11px;">{r["Time"]}</td>'
         f'<td style="padding:2px 8px;text-align:center;'
-        f'color:{"#4ade80" if r["Side"]=="BUY" else "#f87171"};'
+        f'color:var(--green) if BUY else var(--red);'  # placeholder, replaced below
+        f'</td>'
+        f'</tr>'
+        for r in rows
+    )
+    # The f-string above cannot branch on a value inside a style attribute, so
+    # build the row with a real conditional on each cell's color.
+    html_rows = "".join(
+        f'<tr>'
+        f'<td style="padding:2px 8px;color:var(--text-mid);'
+        f'font-family:JetBrains Mono,monospace;font-size:11px;">{r["Time"]}</td>'
+        f'<td style="padding:2px 8px;text-align:center;'
+        f'color:{ "var(--green)" if r["Side"]=="BUY" else ("var(--red)" if r["Side"]=="SELL" else "var(--text-mid)") };'
         f'font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600;">{r["Side"]}</td>'
-        f'<td style="padding:2px 8px;text-align:right;color:#e6ecf2;'
+        f'<td style="padding:2px 8px;text-align:right;color:var(--text-hi);'
         f'font-family:JetBrains Mono,monospace;font-size:11px;">{r["Price"]:.2f}</td>'
-        f'<td style="padding:2px 8px;text-align:right;color:#6cb6ff;'
+        f'<td style="padding:2px 8px;text-align:right;color:var(--accent);'
         f'font-family:JetBrains Mono,monospace;font-size:11px;">{r["Qty"]:,}</td>'
-        f'<td style="padding:2px 8px;text-align:right;color:#5c6b7f;'
+        f'<td style="padding:2px 8px;text-align:right;color:var(--text-lo);'
         f'font-family:JetBrains Mono,monospace;font-size:10px;">{r["Seq"]}</td>'
         f'</tr>'
         for r in rows
@@ -50,8 +60,8 @@ def render_trades_panel(state: SharedState, sym: str, limit: int = 30):
 
     st.markdown(f"""
     <div style="
-        background: #0d1219;
-        border: 1px solid rgba(120,160,210,0.12);
+        background: var(--bg-1);
+        border: 1px solid var(--border-subtle);
         border-radius: 8px;
         max-height: 400px;
         overflow-y: auto;
@@ -59,12 +69,12 @@ def render_trades_panel(state: SharedState, sym: str, limit: int = 30):
     ">
         <table style="width:100%;border-collapse:collapse;">
             <thead>
-                <tr style="border-bottom:1px solid rgba(120,160,210,0.15);">
-                    <th style="padding:6px 8px;text-align:left;color:#5c6b7f;font-size:10px;font-weight:600;">TIME</th>
-                    <th style="padding:6px 8px;text-align:center;color:#5c6b7f;font-size:10px;font-weight:600;">SIDE</th>
-                    <th style="padding:6px 8px;text-align:right;color:#5c6b7f;font-size:10px;font-weight:600;">PRICE</th>
-                    <th style="padding:6px 8px;text-align:right;color:#5c6b7f;font-size:10px;font-weight:600;">QTY</th>
-                    <th style="padding:6px 8px;text-align:right;color:#5c6b7f;font-size:10px;font-weight:600;">SEQ</th>
+                <tr style="border-bottom:1px solid var(--border-strong);">
+                    <th style="padding:6px 8px;text-align:left;color:var(--text-lo);font-size:10px;font-weight:600;">TIME</th>
+                    <th style="padding:6px 8px;text-align:center;color:var(--text-lo);font-size:10px;font-weight:600;">SIDE</th>
+                    <th style="padding:6px 8px;text-align:right;color:var(--text-lo);font-size:10px;font-weight:600;">PRICE</th>
+                    <th style="padding:6px 8px;text-align:right;color:var(--text-lo);font-size:10px;font-weight:600;">QTY</th>
+                    <th style="padding:6px 8px;text-align:right;color:var(--text-lo);font-size:10px;font-weight:600;">SEQ</th>
                 </tr>
             </thead>
             <tbody>
